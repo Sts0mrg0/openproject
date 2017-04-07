@@ -27,7 +27,7 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-class Queries::NotExistingFilter < Queries::BaseFilter
+class Queries::NotExistingFilter < Queries::Filters::Base
   def available?
     false
   end

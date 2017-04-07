@@ -125,7 +125,27 @@ class Queries::WorkPackages::Filter::CustomFieldFilter <
     end
   end
 
+  def where
+    # custom field
+    db_table = CustomValue.table_name
+
+    <<-SQL
+      #{WorkPackage.table_name}.id IN
+        (SELECT #{WorkPackage.table_name}.id
+         FROM #{WorkPackage.table_name}
+         LEFT OUTER JOIN #{db_table}
+           ON #{db_table}.customized_type='WorkPackage'
+           AND #{db_table}.customized_id=#{WorkPackage.table_name}.id
+           AND #{db_table}.custom_field_id=#{custom_field.id}
+         WHERE #{operator_strategy.sql_for_field(values, db_table, 'value')})
+    SQL
+  end
+
   private
+
+  def type_strategy
+    @type_strategy ||= strategies[type].new(self)
+  end
 
   def custom_field_valid
     if custom_field.nil?
@@ -162,6 +182,14 @@ class Queries::WorkPackages::Filter::CustomFieldFilter <
     objects.map do |value|
       Queries::StringObject.new(value.last, value.first)
     end
+  end
+
+  def strategies
+    strategies = Queries::Filters::STRATEGIES.dup
+    strategies[:list_optional] = Queries::Filters::Strategies::CfListOptional
+    strategies[:integer] = Queries::Filters::Strategies::CfInteger
+
+    strategies
   end
 end
 

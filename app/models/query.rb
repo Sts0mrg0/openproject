@@ -29,9 +29,7 @@
 
 class Query < ActiveRecord::Base
   include Queries::AvailableFilters
-  include Queries::SqlForField
-
-  @@user_filters = %w{assigned_to_id author_id watcher_id responsible_id}.freeze
+#  include Queries::SqlForField
 
   belongs_to :project
   belongs_to :user
@@ -481,106 +479,10 @@ class Query < ActiveRecord::Base
     # filters clauses
     filters_clauses = []
     filters.each do |filter|
-      field = filter.field.to_s
-      next if field == 'subproject_id'
+      next if filter.field.to_s == 'subproject_id'
 
-      operator = filter.operator
-      type = filter.type
-      values = filter.values ? filter.values.clone : [''] # HACK - some operators don't require values, but they are needed for building the statement
+      sql = "(#{filter.where})"
 
-      # "me" value substitution
-      if @@user_filters.include? field
-        if values.delete('me')
-          if User.current.logged?
-            values.push(User.current.id.to_s)
-            values += User.current.group_ids.map(&:to_s) if field == 'assigned_to_id'
-          else
-            values.push('0')
-          end
-        end
-      end
-
-      sql = ''
-      if field =~ /\Acf_(\d+)\z/
-        # custom field
-        db_table = CustomValue.table_name
-        db_field = 'value'
-        is_custom_filter = true
-        sql << "#{WorkPackage.table_name}.id IN (SELECT #{WorkPackage.table_name}.id FROM #{WorkPackage.table_name} LEFT OUTER JOIN #{db_table} ON #{db_table}.customized_type='WorkPackage' AND #{db_table}.customized_id=#{WorkPackage.table_name}.id AND #{db_table}.custom_field_id=#{$1} WHERE "
-        sql << sql_for_field(field, operator, values, db_table, db_field, true, type) + ')'
-      elsif field == 'watcher_id'
-        db_table = Watcher.table_name
-        db_field = 'user_id'
-        if User.current.admin?
-          # Admins can always see all watchers
-          sql << "#{WorkPackage.table_name}.id #{operator == '=' ? 'IN' : 'NOT IN'} (SELECT #{db_table}.watchable_id FROM #{db_table} WHERE #{db_table}.watchable_type='WorkPackage' AND #{sql_for_field field, '=', values, db_table, db_field})"
-        else
-          sql_parts = []
-          if User.current.logged? && user_id = values.delete(User.current.id.to_s)
-            # a user can always see his own watched issues
-            sql_parts << "#{WorkPackage.table_name}.id #{operator == '=' ? 'IN' : 'NOT IN'} (SELECT #{db_table}.watchable_id FROM #{db_table} WHERE #{db_table}.watchable_type='WorkPackage' AND #{sql_for_field field, '=', [user_id], db_table, db_field})"
-          end
-          # filter watchers only in projects the user has the permission to view watchers in
-          sql_parts << <<-SQL
-            #{WorkPackage.table_name}.id #{operator == '=' ? 'IN' : 'NOT IN'}
-              (SELECT #{db_table}.watchable_id
-               FROM #{db_table}
-               WHERE #{db_table}.watchable_type='WorkPackage'
-                 AND #{sql_for_field field, '=', values, db_table, db_field})
-                 AND #{Project.table_name}.id IN
-                   (#{Project.allowed_to(User.current, :view_work_package_watchers).select("#{Project.table_name}.id").to_sql})
-          SQL
-          sql << "(#{sql_parts.join(' OR ')})"
-        end
-      elsif field == 'member_of_group' # named field
-        if operator == '*' # Any group
-          groups = Group.all
-          operator = '=' # Override the operator since we want to find by assigned_to
-        elsif operator == '!*'
-          groups = Group.all
-          operator = '!' # Override the operator since we want to find by assigned_to
-        else
-          groups = Group.where(id: values)
-        end
-        groups ||= []
-        members_of_groups = groups.inject([]) {|user_ids, group|
-          if group && group.user_ids.present?
-            user_ids << group.user_ids
-          end
-          user_ids.flatten.uniq.compact
-        }.sort.map(&:to_s)
-
-        sql << '(' + sql_for_field('assigned_to_id', operator, members_of_groups, WorkPackage.table_name, 'assigned_to_id', false) + ')'
-
-      elsif field == 'assigned_to_role' # named field
-        roles = Role.givable
-        if operator == '*' # Any Role
-          operator = '=' # Override the operator since we want to find by assigned_to
-        elsif operator == '!*' # No role
-          operator = '!' # Override the operator since we want to find by assigned_to
-        else
-          roles = roles.where(id: values)
-        end
-        roles ||= []
-
-        members_of_roles = roles.inject([]) {|user_ids, role|
-          if role && role.members
-            user_ids << if project_id
-                          role.members.reject { |m| m.project_id != project_id }.map(&:user_id)
-                        else
-                          role.members.map(&:user_id)
-                        end
-          end
-          user_ids.flatten.uniq.compact
-        }.sort.map(&:to_s)
-
-        sql << '(' + sql_for_field('assigned_to_id', operator, members_of_roles, WorkPackage.table_name, 'assigned_to_id', false) + ')'
-      else
-        # regular field
-        db_table = WorkPackage.table_name
-        db_field = field
-        sql << '(' + sql_for_field(field, operator, values, db_table, db_field, false, type) + ')'
-      end
       filters_clauses << sql
     end if filters.present? and valid?
 

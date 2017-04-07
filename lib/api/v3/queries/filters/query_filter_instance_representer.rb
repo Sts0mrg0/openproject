@@ -105,7 +105,7 @@ module API
           end
 
           def operator_name
-            I18n.t(represented.class.operators[represented.operator.to_sym])
+            I18n.t(represented.operator_class.label_key)
           end
 
           def convert_attribute(attribute)

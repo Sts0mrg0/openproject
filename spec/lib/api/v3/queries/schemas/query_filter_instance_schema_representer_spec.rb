@@ -153,9 +153,9 @@ describe ::API::V3::Queries::Schemas::QueryFilterInstanceSchemaRepresenter do
 
           it_behaves_like 'links to and embeds allowed values directly' do
             let(:hrefs) do
-              [api_v3_paths.query_operator('o'),
+              [api_v3_paths.query_operator('!'),
                api_v3_paths.query_operator('='),
-               api_v3_paths.query_operator('!'),
+               api_v3_paths.query_operator('o'),
                api_v3_paths.query_operator('c'),
                api_v3_paths.query_operator('*')]
             end
