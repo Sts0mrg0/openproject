@@ -163,9 +163,9 @@ group :test do
   # Require factory_girl for usage with openproject plugins testing
   # FactoryGirl needs to be available when loading app otherwise factory
   # definitions from core are not available in the plugin thus specs break
-  gem 'factory_girl', '~> 4.5'
+  gem 'factory_girl', '~> 4.8'
   # require factory_girl_rails for convenience in core development
-  gem 'factory_girl_rails', '~> 4.7', require: false
+  gem 'factory_girl_rails', '~> 4.8', require: false
 
   gem 'cucumber', '~> 2.4.0'
   gem 'cucumber-rails', '~> 1.4.4', require: false
