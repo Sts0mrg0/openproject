@@ -88,7 +88,6 @@ function sortHeader(wpTableHierarchies: WorkPackageTableHierarchiesService,
 
       scope.toggleHierarchy = function(evt:JQueryEventObject) {
         wpTableHierarchies.toggleState();
-        scope.isHierarchyDisabled = wpTableHierarchies.isEnabled;
 
         if(wpTableHierarchies.isEnabled) {
           scope.text.toggleHierarchy = I18n.t('js.work_packages.hierarchy.hide');
