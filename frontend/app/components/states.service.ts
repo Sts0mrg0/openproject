@@ -3,7 +3,6 @@ import {whenDebugging} from '../helpers/debug_output';
 import {WorkPackageTable} from './wp-fast-table/wp-fast-table';
 import {
   WorkPackageTableRow,
-  WPTableHierarchyState,
   WPTableRowSelectionState
 } from './wp-fast-table/wp-table.interfaces';
 import {MultiState, initStates, State} from "../helpers/reactive-fassade";
@@ -25,6 +24,7 @@ import {WorkPackageTableColumns} from './wp-fast-table/wp-table-columns';
 import {WorkPackageTablePagination} from './wp-fast-table/wp-table-pagination';
 import { Subject } from 'rxjs';
 import { WorkPackageTableTimelineVisible } from "./wp-fast-table/wp-table-timeline-visible";
+import { WorkPackageTableHierarchies } from "./wp-fast-table/wp-table-hierarchies";
 
 export class States {
 
@@ -83,7 +83,7 @@ export class TableState {
   // Current state of collapsed groups (if any)
   collapsedGroups = new State<{[identifier:string]: boolean}>();
   // Hierarchies of table
-  hierarchies = new State<WPTableHierarchyState>();
+  hierarchies = new State<WorkPackageTableHierarchies>();
   // State to be updated when the table is up to date
   rendered = new State<WorkPackageTable>();
   // State to determine timeline visibility

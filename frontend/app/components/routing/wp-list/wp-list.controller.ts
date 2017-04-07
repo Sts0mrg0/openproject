@@ -47,7 +47,8 @@ import {WorkPackageCollectionResource} from '../../api/api-v3/hal-resources/wp-c
 import {SchemaResource} from '../../api/api-v3/hal-resources/schema-resource.service';
 import {QueryFilterInstanceSchemaResource} from '../../api/api-v3/hal-resources/query-filter-instance-schema-resource.service';
 import {WorkPackagesListService} from '../../wp-list/wp-list.service'
-import {WorkPackagesListChecksumService} from '../../wp-list/wp-list-checksum.service'
+import { WorkPackagesListChecksumService } from '../../wp-list/wp-list-checksum.service'
+import { WorkPackageTableHierarchiesService } from "../../wp-fast-table/state/wp-table-hierarchy.service";
 
 function WorkPackagesListController($scope:any,
                                     $rootScope:ng.IRootScopeService,
@@ -61,6 +62,7 @@ function WorkPackagesListController($scope:any,
                                     wpTableFilters:WorkPackageTableFiltersService,
                                     wpTableSum:WorkPackageTableSumService,
                                     wpTableTimeline:WorkPackageTableTimelineService,
+                                    wpTableHierarchies:WorkPackageTableHierarchiesService,
                                     wpTablePagination:WorkPackageTablePaginationService,
                                     wpListService:WorkPackagesListService,
                                     wpListChecksumService:WorkPackagesListChecksumService,
@@ -122,6 +124,10 @@ function WorkPackagesListController($scope:any,
 
     wpTableTimeline.observeOnScope($scope).subscribe(timeline => {
       updateAndExecuteIfAltered(timeline.current, 'timelineVisible');
+    });
+
+    wpTableHierarchies.observeOnScope($scope).subscribe(hierarchies => {
+      updateAndExecuteIfAltered(hierarchies.current, 'showHierarchies');
     });
 
     wpTableColumns.observeOnScope($scope).subscribe(columns => {
@@ -226,6 +232,7 @@ function WorkPackagesListController($scope:any,
            !states.table.sortBy.getCurrentValue() ||
            !states.table.groupBy.getCurrentValue() ||
            !states.table.timelineVisible.getCurrentValue() ||
+           !states.table.hierarchies.getCurrentValue() ||
            !states.table.sum.getCurrentValue()
   }
 

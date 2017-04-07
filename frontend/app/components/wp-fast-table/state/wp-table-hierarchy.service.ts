@@ -1,29 +1,35 @@
+import {QueryResource} from '../../api/api-v3/hal-resources/query-resource.service';
 import {States} from '../../states.service';
 import {opServicesModule} from '../../../angular-modules';
-import {State} from '../../../helpers/reactive-fassade';
-import {WPTableHierarchyState} from '../wp-table.interfaces';
+import { State } from '../../../helpers/reactive-fassade';
+import { WorkPackageTableHierarchies } from "../wp-table-hierarchies";
+import {TableStateStates, WorkPackageTableBaseService} from './wp-table-base.service';
 
-export class WorkPackageTableHierarchyService {
+export class WorkPackageTableHierarchiesService extends WorkPackageTableBaseService {
+  protected stateName = 'hierarchies' as TableStateStates;
 
-  // The selected columns state of the current table instance
-  public hierarchyState:State<WPTableHierarchyState>;
+  constructor(public states:States) {
+    super(states);
+  }
 
-  constructor(public states: States) {
-    this.hierarchyState = states.table.hierarchies;
+  public initialize(query:QueryResource) {
+    let current = new WorkPackageTableHierarchies(query.showHierarchies);
+
+    this.state.put(current);
   }
 
   /**
    * Return whether the current hierarchy mode is active
    */
    public get isEnabled():boolean {
-    return this.currentState.enabled;
+    return this.currentState.isEnabled;
    }
 
    public setEnabled(active:boolean = true) {
      const state = this.currentState;
-     state.enabled = active;
+     state.current = active;
 
-     this.hierarchyState.put(state);
+     this.state.put(state);
    }
 
    /**
@@ -67,29 +73,25 @@ export class WorkPackageTableHierarchyService {
   private setState(wpId:string, isCollapsed:boolean):void {
     const state = this.currentState;
     state.collapsed[wpId] = isCollapsed;
-    this.hierarchyState.put(state);
+    this.state.put(state);
   }
 
   /**
    * Get current selection state.
    */
-  public get currentState():WPTableHierarchyState {
-    const state = this.hierarchyState.getCurrentValue();
+  public get currentState():WorkPackageTableHierarchies {
+    const state = this.state.getCurrentValue();
 
     if (state == null) {
       return this.initialState;
     }
 
-    return state;
+    return state as WorkPackageTableHierarchies;
   }
 
-  private get initialState():WPTableHierarchyState {
-    return {
-      enabled: false,
-      collapsed: {}
-    } as WPTableHierarchyState;
+  private get initialState():WorkPackageTableHierarchies {
+    return new WorkPackageTableHierarchies(false);
   }
-
 }
 
-opServicesModule.service('wpTableHierarchy', WorkPackageTableHierarchyService);
+opServicesModule.service('wpTableHierarchies', WorkPackageTableHierarchiesService);
